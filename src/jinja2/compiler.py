@@ -1858,11 +1858,17 @@ class CodeGenerator(NodeVisitor):
                 self.visit(node.expr2, frame)
                 return
 
-            self.write(
-                f'cond_expr_undefined("the inline if-expression on'
+                        # The position contains the template name, which is
+            # attacker-controlled when templates are loaded by name.
+            # Emit the message through repr so a quote in the name
+            # cannot break out of the generated string literal
+            # (same fix as visit_FromImport for CVE-2024-56201).
+            message = (
+                "the inline if-expression on"
                 f" {self.position(node)} evaluated to false and no else"
-                f' section was defined.")'
+                " section was defined."
             )
+            self.write(f"cond_expr_undefined({message!r})")
 
         self.write("(")
         self.visit(node.expr1, frame)
